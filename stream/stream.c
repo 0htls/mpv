@@ -61,6 +61,7 @@ extern const stream_info_t stream_info_bdnav;
 extern const stream_info_t stream_info_edl;
 extern const stream_info_t stream_info_libarchive;
 extern const stream_info_t stream_info_cb;
+extern const streamn_info_t stream_info_smb2;
 
 static const stream_info_t *const stream_list[] = {
 #if HAVE_CDDA
@@ -84,6 +85,9 @@ static const stream_info_t *const stream_list[] = {
 #if HAVE_LIBARCHIVE
     &stream_info_libarchive,
 #endif
+#if HAVE_LIBSMB2
+    &stream_info_smb2,
+#endif    
     &stream_info_memory,
     &stream_info_null,
     &stream_info_mf,

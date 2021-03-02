@@ -387,6 +387,12 @@ iconv support use --disable-iconv.",
         'desc': 'SDL2 gamepad input',
         'deps': 'sdl2',
         'func': check_true,
+    }, {
+        'name': '--libsmb2',
+        'desc': 'Samba support (LGPL 2.1)',
+        'func': check_pkg_config('libsmb2'),
+        'default': 'disable',
+        'module': 'input',
     }
 ]
 
