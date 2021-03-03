@@ -206,7 +206,7 @@ static int open_f (stream_t *stream)
 
   bool write = stream->mode == STREAM_WRITE;
 
-  int flags = write ? O_RDWR | O_CREAT | O_TRUNC : O_RDONLY;
+  int flags = write ? O_RDWR | O_CREAT : O_RDONLY;
   fh = smb2_open(ctx, url->path, flags);
   if (!fh) {
     MP_ERR(stream, "smb2_open failed");
