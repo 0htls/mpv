@@ -1,3 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+
 #include "smb2/smb2.h"
 #include "smb2/libsmb2.h"
 
