@@ -6,6 +6,7 @@
 #include "smb2/smb2.h"
 #include "smb2/libsmb2.h"
 
+#include "common/msg.h"
 #include "stream.h"
 
 struct smb_url {
@@ -187,20 +188,26 @@ static int open_f (stream_t *stream)
 
   url = smb_url_parse(stream->url);
   if (!url) {
-    MP_ERR(stream, "failed to parse url: %s\n", smb2_get_error(ctx));
+    MP_ERR(stream, "smb_url_parse failed\n", stream->url);
     goto out;
   }
   priv->url = url;
 
   smb2_set_security_mode(ctx, SMB2_NEGOTIATE_SIGNING_ENABLED);
 
-  smb2_set_user(ctx, url->user);
   if (url->domain) {
     smb2_set_domain(ctx, url->domain);
+    MP_VERBOSE(stream, "domain: %s", url->domain);
   }
   if (url->password) {
     smb2_set_password(ctx, url->password);
+    MP_VERBOSE(stream, "password: %s", url->password);
   }
+  smb2_set_user(ctx, url->user);
+  MP_VERBOSE(stream, "user: %s", url->user);
+  MP_VERBOSE(stream, "server: %s", url->server);
+  MP_VERBOSE(stream, "share: %s", url->share);
+  MP_VERBOSE(stream, "path: %s", url->path);
 
 
   is_connected = smb2_connect_share(ctx, url->server, url->share, url->user) == 0;
@@ -214,7 +221,7 @@ static int open_f (stream_t *stream)
   int flags = write ? O_RDWR | O_CREAT : O_RDONLY;
   fh = smb2_open(ctx, url->path, flags);
   if (!fh) {
-    MP_ERR(stream, "smb2_open failed");
+    MP_ERR(stream, "smb2_open failed: %s", url->path);
     goto out;
   }
   priv->fh = fh;
