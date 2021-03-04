@@ -197,22 +197,22 @@ static int open_f (stream_t *stream)
 
   if (url->domain) {
     smb2_set_domain(ctx, url->domain);
-    MP_VERBOSE(stream, "domain: %s", url->domain);
+    MP_VERBOSE(stream, "domain: %s\n", url->domain);
   }
   if (url->password) {
     smb2_set_password(ctx, url->password);
-    MP_VERBOSE(stream, "password: %s", url->password);
+    MP_VERBOSE(stream, "password: %s\n", url->password);
   }
   smb2_set_user(ctx, url->user);
-  MP_VERBOSE(stream, "user: %s", url->user);
-  MP_VERBOSE(stream, "server: %s", url->server);
-  MP_VERBOSE(stream, "share: %s", url->share);
-  MP_VERBOSE(stream, "path: %s", url->path);
+  MP_VERBOSE(stream, "user: %s\n", url->user);
+  MP_VERBOSE(stream, "server: %s\n", url->server);
+  MP_VERBOSE(stream, "share: %s\n", url->share);
+  MP_VERBOSE(stream, "path: %s\n", url->path);
 
 
   is_connected = smb2_connect_share(ctx, url->server, url->share, url->user) == 0;
   if (!is_connected) {
-    MP_ERR(stream, "smb2_connect_share failed");
+    MP_ERR(stream, "smb2_connect_share failed\n");
     goto out;
   }
 
@@ -221,7 +221,7 @@ static int open_f (stream_t *stream)
   int flags = write ? O_RDWR | O_CREAT : O_RDONLY;
   fh = smb2_open(ctx, url->path, flags);
   if (!fh) {
-    MP_ERR(stream, "smb2_open failed: %s", url->path);
+    MP_ERR(stream, "smb2_open failed: %s\n", url->path);
     goto out;
   }
   priv->fh = fh;
