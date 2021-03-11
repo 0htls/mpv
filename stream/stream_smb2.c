@@ -143,19 +143,22 @@ static int64_t get_size(stream_t *s)
 static int seek(stream_t *s, int64_t newpos) 
 {
   struct priv *p = s->priv;
-  return smb2_lseek(p->ctx, p->fh, newpos, SEEK_SET, NULL);
+  if (smb2_lseek(p->ctx, p->fh, newpos, SEEK_SET, NULL) < 0) {
+    return 0;
+  }
+  return 1;
 }
 
 static int fill_buffer(stream_t *s, char* buffer, int max_len)
 {
   struct priv *p = s->priv;
-  return smb2_read(p->ctx, p->fh, buffer, max_len);
+  return smb2_read(p->ctx, p->fh, (uint8_t)buffer, (uint32_t)max_len);
 }
 
 static int write_buffer(stream_t *s, char* buffer, int len) 
 {
   struct priv *p = s->priv;
-  return smb2_write(p->ctx, p->fh, buffer, len);
+  return smb2_write(p->ctx, p->fh, (uint8_t)buffer, (uint32_t)len);
 }
 
 static void close_f(stream_t *s) 
@@ -228,7 +231,7 @@ static int open_f (stream_t *stream)
 
   int64_t len = smb2_lseek(ctx, fh, 0, SEEK_END, NULL);
   smb2_lseek(ctx, fh, 0, SEEK_SET, NULL);
-  if (len != (int64_t)-1) {
+  if (len >= 0) {
     stream->seek = seek;
     stream->seekable = true;
   }
