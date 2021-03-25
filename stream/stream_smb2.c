@@ -22,6 +22,8 @@ struct priv {
  struct smb2_context *ctx;
  struct smb2fh *fh;
  struct smb_url *url;
+ uint32_t max_read_size;
+ uint32_t max_write_size;
 };
 
 static char *substr(const char *s, size_t start, size_t end)
@@ -152,13 +154,23 @@ static int seek(stream_t *s, int64_t newpos)
 static int fill_buffer(stream_t *s, char* buffer, int max_len)
 {
   struct priv *p = s->priv;
-  return smb2_read(p->ctx, p->fh, (uint8_t)buffer, (uint32_t)max_len);
+  uint32_t read_len = max_len > p->max_read_size ? p->max_read_size : max_len;
+  int ret;
+  while (read_len > 0) {
+    ret = smb2_read(p->ctx, (uint8_t)buffer, read_len);
+    if (ret <= 0)
+      return -1;
+    read_len -= ret;
+    buffer += ret;
+  }
+  return max_len;
 }
 
 static int write_buffer(stream_t *s, char* buffer, int len) 
 {
   struct priv *p = s->priv;
-  return smb2_write(p->ctx, p->fh, (uint8_t)buffer, (uint32_t)len);
+  uint32_t write_len = len > p->max_write_size ? p->max_write_size : len;
+  return smb2_write(p->ctx, p->fh, (uint8_t)buffer, write_len);
 }
 
 static void close_f(stream_t *s) 
@@ -228,6 +240,9 @@ static int open_f (stream_t *stream)
     goto out;
   }
   priv->fh = fh;
+
+  priv->max_read_size = smb2_get_max_read_size(ctx);
+  priv->max_write_size = smb2_get_max_write_size(ctx);
 
   int64_t len = smb2_lseek(ctx, fh, 0, SEEK_END, NULL);
   smb2_lseek(ctx, fh, 0, SEEK_SET, NULL);
