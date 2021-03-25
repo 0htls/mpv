@@ -428,6 +428,11 @@ audio_output_features = [
         'deps': 'sdl2',
         'func': check_true,
     }, {
+        'name': '--oss-audio',
+        'desc': 'OSSv4 audio output',
+        'func': check_statement(['sys/soundcard.h'], 'int x = SNDCTL_DSP_SETPLAYVOL'),
+        'deps': 'posix && gpl',
+    }, {
         'name': '--pulse',
         'desc': 'PulseAudio audio output',
         'func': check_pkg_config('libpulse', '>= 1.0')
@@ -731,7 +736,7 @@ video_output_features = [
     }, {
         'name': '--libplacebo',
         'desc': 'libplacebo support',
-        'func': check_pkg_config('libplacebo >= 1.18.0'),
+        'func': check_pkg_config('libplacebo >= 2.72.0'),
     }, {
         'name': '--vulkan',
         'desc':  'Vulkan context support',
