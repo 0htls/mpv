@@ -155,15 +155,7 @@ static int fill_buffer(stream_t *s, char* buffer, int max_len)
 {
   struct priv *p = s->priv;
   uint32_t read_len = max_len > p->max_read_size ? p->max_read_size : max_len;
-  int ret;
-  while (read_len > 0) {
-    ret = smb2_read(p->ctx, p->fh, (uint8_t)buffer, read_len);
-    if (ret <= 0)
-      return -1;
-    read_len = max_len - ret;
-    buffer += ret;
-  }
-  return max_len;
+  return smb2_read(p->ctx, p->fh, (uint8_t)buffer, read_len);
 }
 
 static int write_buffer(stream_t *s, char* buffer, int len) 
