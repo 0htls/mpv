@@ -157,7 +157,7 @@ static int fill_buffer(stream_t *s, char* buffer, int max_len)
   uint32_t read_len = max_len > p->max_read_size ? p->max_read_size : max_len;
   int ret;
   while (read_len > 0) {
-    ret = smb2_read(p->ctx, (uint8_t)buffer, read_len);
+    ret = smb2_read(p->ctx, p->fh, (uint8_t)buffer, read_len);
     if (ret <= 0)
       return -1;
     read_len = max_len - ret;
