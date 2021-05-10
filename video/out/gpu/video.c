@@ -317,7 +317,7 @@ static const struct gl_video_opts gl_video_opts_def = {
     },
     .scaler_resizes_only = 1,
     .scaler_lut_size = 6,
-    .interpolation_threshold = 0.0001,
+    .interpolation_threshold = 0.01,
     .alpha_mode = ALPHA_BLEND_TILES,
     .background = {0, 0, 0, 255},
     .gamma = 1.0f,
@@ -337,13 +337,13 @@ static const struct gl_video_opts gl_video_opts_def = {
 };
 
 static int validate_scaler_opt(struct mp_log *log, const m_option_t *opt,
-                               struct bstr name, struct bstr param);
+                               struct bstr name, const char **value);
 
 static int validate_window_opt(struct mp_log *log, const m_option_t *opt,
-                               struct bstr name, struct bstr param);
+                               struct bstr name, const char **value);
 
 static int validate_error_diffusion_opt(struct mp_log *log, const m_option_t *opt,
-                                        struct bstr name, struct bstr param);
+                                        struct bstr name, const char **value);
 
 #define OPT_BASE_STRUCT struct gl_video_opts
 
@@ -3251,11 +3251,9 @@ void gl_video_render_frame(struct gl_video *p, struct vo_frame *frame,
 
     bool has_frame = !!frame->current;
 
-    if (!has_frame || !mp_rect_equals(&p->dst_rect, &target_rc)) {
-        struct m_color c = p->clear_color;
-        float clear_color[4] = {c.r / 255.0, c.g / 255.0, c.b / 255.0, c.a / 255.0};
-        p->ra->fns->clear(p->ra, fbo.tex, clear_color, &target_rc);
-    }
+    struct m_color c = p->clear_color;
+    float clear_color[4] = {c.r / 255.0, c.g / 255.0, c.b / 255.0, c.a / 255.0};
+    p->ra->fns->clear(p->ra, fbo.tex, clear_color, &target_rc);
 
     if (p->hwdec_overlay) {
         if (has_frame) {
@@ -4089,8 +4087,9 @@ void gl_video_configure_queue(struct gl_video *p, struct vo *vo)
 }
 
 static int validate_scaler_opt(struct mp_log *log, const m_option_t *opt,
-                               struct bstr name, struct bstr param)
+                               struct bstr name, const char **value)
 {
+    struct bstr param = bstr0(*value);
     char s[20] = {0};
     int r = 1;
     bool tscale = bstr_equals0(name, "tscale");
@@ -4121,8 +4120,9 @@ static int validate_scaler_opt(struct mp_log *log, const m_option_t *opt,
 }
 
 static int validate_window_opt(struct mp_log *log, const m_option_t *opt,
-                               struct bstr name, struct bstr param)
+                               struct bstr name, const char **value)
 {
+    struct bstr param = bstr0(*value);
     char s[20] = {0};
     int r = 1;
     if (bstr_equals0(param, "help")) {
@@ -4146,8 +4146,9 @@ static int validate_window_opt(struct mp_log *log, const m_option_t *opt,
 }
 
 static int validate_error_diffusion_opt(struct mp_log *log, const m_option_t *opt,
-                                        struct bstr name, struct bstr param)
+                                        struct bstr name, const char **value)
 {
+    struct bstr param = bstr0(*value);
     char s[20] = {0};
     int r = 1;
     if (bstr_equals0(param, "help")) {

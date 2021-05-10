@@ -438,31 +438,34 @@ class Common: NSObject {
                                     NSScreen.main
     }
 
-    func getWindowGeometry(forScreen targetScreen: NSScreen,
+    func getWindowGeometry(forScreen screen: NSScreen,
                            videoOut vo: UnsafeMutablePointer<vo>) -> NSRect {
-        let r = targetScreen.convertRectToBacking(targetScreen.frame)
-        let targetFrame =
-            (mpv?.macOpts.macos_geometry_calculation ?? Int32(FRAME_VISIBLE)) == FRAME_VISIBLE ?
-                targetScreen.visibleFrame : targetScreen.frame
-        let rv = targetScreen.convertRectToBacking(targetFrame)
+        let r = screen.convertRectToBacking(screen.frame)
+        let targetFrame = (mpv?.macOpts.macos_geometry_calculation ?? Int32(FRAME_VISIBLE)) == FRAME_VISIBLE
+            ? screen.visibleFrame : screen.frame
+        let rv = screen.convertRectToBacking(targetFrame)
 
+        // convert origin to be relative to target screen
+        var originY = rv.origin.y - r.origin.y
+        let originX = rv.origin.x - r.origin.x
         // flip the y origin, mp_rect expects the origin at the top-left
         // macOS' windowing system operates from the bottom-left
-        var originY = r.size.height - rv.origin.y - rv.size.height
-        var screenRC: mp_rect = mp_rect(x0: Int32(rv.origin.x),
+        originY = -(originY + rv.size.height)
+        var screenRC: mp_rect = mp_rect(x0: Int32(originX),
                                         y0: Int32(originY),
-                                        x1: Int32(rv.origin.x + rv.size.width),
+                                        x1: Int32(originX + rv.size.width),
                                         y1: Int32(originY + rv.size.height))
+
         var geo: vo_win_geometry = vo_win_geometry()
-        vo_calc_window_geometry2(vo, &screenRC, Double(targetScreen.backingScaleFactor), &geo)
+        vo_calc_window_geometry2(vo, &screenRC, Double(screen.backingScaleFactor), &geo)
         vo_apply_window_geometry(vo, &geo)
 
-        // flip the y origin again
         let height = CGFloat(geo.win.y1 - geo.win.y0)
-        originY = r.size.height - CGFloat(geo.win.y0) - height
-        let wr = NSMakeRect(CGFloat(geo.win.x0), originY,
-                            CGFloat(geo.win.x1 - geo.win.x0), height)
-        return targetScreen.convertRectFromBacking(wr)
+        let width = CGFloat(geo.win.x1 - geo.win.x0)
+        // flip the y origin again
+        let y = CGFloat(-geo.win.y1)
+        let x = CGFloat(geo.win.x0)
+        return screen.convertRectFromBacking(NSMakeRect(x, y, width, height))
     }
 
     func getInitProperties(_ vo: UnsafeMutablePointer<vo>) -> (MPVHelper, NSScreen, NSRect) {
@@ -645,6 +648,17 @@ class Common: NSObject {
             SWIFT_TARRAY_STRING_APPEND(nil, &array, &count, ta_xstrdup(nil, displayName))
             SWIFT_TARRAY_STRING_APPEND(nil, &array, &count, nil)
             dnames.pointee = array
+            return VO_TRUE
+        case VOCTRL_GET_DISPLAY_RES:
+            guard let screen = getCurrentScreen() else {
+                log.sendWarning("No Screen available to retrieve frame")
+                return VO_NOTAVAIL
+            }
+            let sizeData = data.assumingMemoryBound(to: Int32.self)
+            let size = UnsafeMutableBufferPointer(start: sizeData, count: 2)
+            let frame = screen.convertRectToBacking(screen.frame)
+            size[0] = Int32(frame.size.width)
+            size[1] = Int32(frame.size.height)
             return VO_TRUE
         case VOCTRL_GET_FOCUSED:
             let focus = data.assumingMemoryBound(to: CBool.self)

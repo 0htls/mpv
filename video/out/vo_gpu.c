@@ -292,8 +292,10 @@ static int preinit(struct vo *vo)
     p->log = vo->log;
 
     struct ra_ctx_opts opts = p->opts;
-    struct gl_video_opts *gl_opts = mp_get_config_group(p->ctx, vo->global, &gl_video_conf);
+    struct gl_video_opts *gl_opts =
+        mp_get_config_group(p->ctx, vo->global, &gl_video_conf);
     opts.want_alpha = gl_opts->alpha_mode == 1;
+    talloc_free(gl_opts);
 
     p->ctx = ra_ctx_create(vo, p->context_type, p->context_name, opts);
     if (!p->ctx)
@@ -321,8 +323,12 @@ err_out:
 
 #define OPT_BASE_STRUCT struct gpu_priv
 static const m_option_t options[] = {
-    {"gpu-context", OPT_STRING_VALIDATE(context_name, ra_ctx_validate_context)},
-    {"gpu-api", OPT_STRING_VALIDATE(context_type, ra_ctx_validate_api)},
+    {"gpu-context",
+        OPT_STRING_VALIDATE(context_name, ra_ctx_validate_context),
+        .help = ra_ctx_context_help},
+    {"gpu-api",
+        OPT_STRING_VALIDATE(context_type, ra_ctx_validate_api),
+        .help = ra_ctx_api_help},
     {"gpu-debug", OPT_FLAG(opts.debug)},
     {"gpu-sw", OPT_FLAG(opts.allow_sw)},
     {0}
